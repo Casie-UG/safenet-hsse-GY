@@ -288,19 +288,27 @@ export default function ReportIncident() {
           <input value={formData.longitude} readOnly placeholder="Longitude" className="input bg-gray-100" />
         </div>
 
-        {/*uploads*/}
-        <div>
-          <label className="font-medium block mb-1">Attach Photos/Videos</label>
-          <input type="file" accept="image/*,video/*" multiple onChange={handleFileChange} />
+        {/* Uploads */}
+        <div className="space-y-1">
+          <label className="block font-medium">Attach Photos / Videos</label>
+          <input
+            type="file"
+            accept="image/*,video/*"
+            multiple
+            onChange={handleFileChange}
+            className="input"
+          />
           {uploading && <p className="text-blue-600 text-sm">Uploading…</p>}
+
           {formData.media_urls.length > 0 && (
-            <ul className="mt-2 list-disc list-inside text-green-700 text-sm space-y-1">
-              {formData.media_urls.map((u) => (
-                <li key={u}>{u.split("/").pop()}</li>
+            <ul className="list-disc list-inside text-green-700 text-sm space-y-1">
+              {formData.media_urls.map((url) => (
+                <li key={url}>{url.split("/").pop()}</li>
               ))}
             </ul>
           )}
         </div>
+
 
         {/*casualties*/}
         <label className="flex items-center font-semibold space-x-2">
