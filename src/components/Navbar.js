@@ -17,11 +17,11 @@ export default function Navbar() {
         <NavLink to="/report" className={linkClass}>
           Report an Incident
         </NavLink>
-        <NavLink to="/safety-tips" className={linkClass}>
+        <NavLink to="/safety" className={linkClass}>
           Safety Tips
         </NavLink>
-        <NavLink to="/admin" className={linkClass}>
-          Admin Panel
+        <NavLink to="/login" className={linkClass}>
+          Log In
         </NavLink>
       </div>
     </nav>

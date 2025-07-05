@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 
-const BUCKET = "hsse-media"; // your Supabase bucket
+const BUCKET = "hsse-media";
 
 export default function ReportIncident() {
   const [formData, setFormData] = useState({
@@ -23,14 +23,12 @@ export default function ReportIncident() {
     num_dead: "",
     paramedics_called: false,
     paramedics_responded: false,
-    media_urls: [],              // 🆕  store uploaded file URLs
+    media_urls: [],
   });
 
   const [uploading, setUploading] = useState(false);
 
-  /* ──────────────────────────────
-     Auto‑geocode whenever address changes
-  ────────────────────────────── */
+  /*geolocator */
   useEffect(() => {
     const fetchCoords = async () => {
       if (!formData.location_text) return;
@@ -55,9 +53,7 @@ export default function ReportIncident() {
     fetchCoords();
   }, [formData.location_text]);
 
-  /* ──────────────────────────────
-     Browser geolocation
-  ────────────────────────────── */
+  /*geo locator*/
   const useBrowserLocation = () => {
     if (!navigator.geolocation) {
       alert("Geolocation not supported.");
@@ -74,9 +70,7 @@ export default function ReportIncident() {
     );
   };
 
-  /* ──────────────────────────────
-     File upload handler
-  ────────────────────────────── */
+  /*upload image*/
   const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
@@ -101,10 +95,7 @@ export default function ReportIncident() {
     setUploading(false);
   };
 
-  /* ──────────────────────────────
-     Generic input handler
-  ────────────────────────────── */
-  const handleChange = (e) => {
+    const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((p) => ({
       ...p,
@@ -112,9 +103,7 @@ export default function ReportIncident() {
     }));
   };
 
-  /* ──────────────────────────────
-     Submit to Supabase
-  ────────────────────────────── */
+  /* submit*/
   const handleSubmit = async (e) => {
     e.preventDefault();
     const payload = { ...formData };
@@ -128,7 +117,7 @@ export default function ReportIncident() {
       console.error(error);
     } else {
       alert("Report submitted successfully!");
-      // optional: redirect or just reset
+      //redirect or just reset
       setFormData({
         reporter_name: "",
         is_anonymous: false,
@@ -275,7 +264,7 @@ export default function ReportIncident() {
           className="input"
         />
 
-        {/*use gps*/}
+        {/*use gps */}
         <button
           type="button"
           onClick={useBrowserLocation}
