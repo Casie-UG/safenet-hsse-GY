@@ -152,22 +152,22 @@ export default function ReportIncident() {
     }
   };
 
-  /* ──────────────────────────────
-     JSX
-  ────────────────────────────── */
+
   return (
     <div className="max-w-3xl mx-auto p-6 bg-white rounded-xl shadow border border-gray-200">
       <h2 className="text-3xl font-bold mb-6">Report an Incident</h2>
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Reporter & anonymity */}
+        {/*reporter*/}
         <div className="grid md:grid-cols-2 gap-4">
           <input
             name="reporter_name"
             value={formData.reporter_name}
             onChange={handleChange}
             placeholder="Reporter Name"
-            className="input"
+            className="input disabled:bg-gray-100"
+            disabled={formData.is_anonymous}
+          
           />
           <label className="flex items-center space-x-2">
             <input
@@ -180,7 +180,7 @@ export default function ReportIncident() {
           </label>
         </div>
 
-        {/* Incident core */}
+        {/*incident details*/}
         <textarea
           name="incident_description"
           value={formData.incident_description}
@@ -200,7 +200,7 @@ export default function ReportIncident() {
           required
         />
 
-        {/* Dropdowns */}
+        {/*dropdown lists*/}
         <div className="grid md:grid-cols-2 gap-4">
           <select
             name="type_of_accident"
@@ -266,7 +266,7 @@ export default function ReportIncident() {
           className="input"
         />
 
-        {/* Address → auto‑coords */}
+        {/*location*/}
         <input
           name="location_text"
           value={formData.location_text}
@@ -275,7 +275,7 @@ export default function ReportIncident() {
           className="input"
         />
 
-        {/* GPS locator */}
+        {/*use gps*/}
         <button
           type="button"
           onClick={useBrowserLocation}
@@ -288,7 +288,7 @@ export default function ReportIncident() {
           <input value={formData.longitude} readOnly placeholder="Longitude" className="input bg-gray-100" />
         </div>
 
-        {/* Media upload */}
+        {/*uploads*/}
         <div>
           <label className="font-medium block mb-1">Attach Photos/Videos</label>
           <input type="file" accept="image/*,video/*" multiple onChange={handleFileChange} />
@@ -302,7 +302,7 @@ export default function ReportIncident() {
           )}
         </div>
 
-        {/* Casualties */}
+        {/*casualties*/}
         <label className="flex items-center font-semibold space-x-2">
           <input type="checkbox" name="casualties" checked={formData.casualties} onChange={handleChange} />
           <span>Casualties involved?</span>
@@ -349,7 +349,7 @@ export default function ReportIncident() {
           </div>
         )}
 
-        {/* Submit */}
+        {/*submit*/}
         <button
           type="submit"
           className="w-full bg-blue-700 text-white py-3 rounded-md hover:bg-blue-800"
