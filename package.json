@@ -1,4 +1,4 @@
-{ 
+{
   "name": "safenet-hsse",
   "version": "0.1.0",
   "private": true,
@@ -17,7 +17,7 @@
     "react-scripts": "5.0.1",
     "recharts": "3.0.2",
     "react-icons": "^4.10.1",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
     "sweetalert2": "^11.7.12"
   },
   "scripts": {
