@@ -1,4 +1,3 @@
-// src/pages/AdminDashboard.jsx
 import { useEffect, useState, useMemo } from "react";
 import {
   FaRegFileAlt,
@@ -14,12 +13,10 @@ import { supabase } from "../supabaseClient";
 
 
 export default function AdminDashboard() {
-  /* ─────────────────────  state  ───────────────────── */
+  //states
   const [reports, setReports] = useState([]);
   const [loadingReports, setLoadingReports] = useState(true);
-  const [scannedViolationsCount, setScannedViolationsCount] = useState(0); // New state for scanned violations count
-  const [loadingScannedViolations, setLoadingScannedViolations] = useState(true); // New loading state
-   
+  
   const [socialCounts, setSocialCounts] = useState({
     facebook: 0,
     twitter: 0,
@@ -28,9 +25,8 @@ export default function AdminDashboard() {
   });
   const [loadingSocial, setLoadingSocial] = useState(true);
 
-  /* ───────────────── stat helpers (reports) ────────── */
-  // Update totalReports to include scannedViolationsCount
-  const totalReports = reports.length + scannedViolationsCount; 
+  //stat report helpers
+  const totalReports = reports.length;
 
   const criticalThisWeek = useMemo(() => {
     const oneWeekAgo = Date.now() - 7 * 24 * 3600 * 1000;
@@ -42,7 +38,7 @@ export default function AdminDashboard() {
   }, [reports]);
 
   const resolvedCount = reports.filter((r) => r.status === "resolved").length;
-  const unresolvedCount = totalReports - resolvedCount; // This will now reflect the combined total
+  const unresolvedCount = totalReports - resolvedCount;
 
   const newestAge =
     reports.length > 0
@@ -53,80 +49,61 @@ export default function AdminDashboard() {
         )
       : null; // hours
 
-  /* ───────────────── fetch reports and scanned violations ─────────────────── */
+  //fetch reports
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchReports = async () => {
       setLoadingReports(true);
-      setLoadingScannedViolations(true);
-
-      // Fetch reports
-      const { data: reportsData, error: reportsError } = await supabase
+      const { data, error } = await supabase
         .from("reports")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (reportsError) console.error("Error fetching reports:", reportsError);
-      else setReports(reportsData);
+      if (error) console.error(error);
+      else setReports(data);
       setLoadingReports(false);
-
-      // Fetch scanned violations count
-      const { count: violationsCount, error: violationsError } = await supabase
-        .from("scanned_violations")
-        .select("*", { count: 'exact', head: true });
-
-      if (violationsError) console.error("Error fetching scanned violations:", violationsError);
-      else setScannedViolationsCount(violationsCount || 0); // Ensure it's a number, default to 0
-      setLoadingScannedViolations(false);
     };
-    fetchData();
+    fetchReports();
   }, []);
 
-  /* ───────────────── fetch social-media counts ───────────── */
+  //social media counts
   useEffect(() => {
     const fetchSocial = async () => {
       setLoadingSocial(true);
 
-      // Fetch from social_media_incidents
-      const { data: socialData, error: socialError } = await supabase
+      const { data, error } = await supabase
         .from("social_media_incidents")
         .select("source, count:id", { group: "source" });
+       
 
-      if (socialError) {
-        console.error("Social media incidents fetch error:", socialError);
+      if (error) {
+        console.error("social fetch error:", error);
         setLoadingSocial(false);
         return;
       }
 
-      // Start all at 0
+      // start all at 0
       const counts = { facebook: 0, twitter: 0, instagram: 0, google_news: 0 };
 
-      // Process social_media_incidents data
-      socialData.forEach((row) => {
-        const src = row.source.trim().toLowerCase();       // normalise
+      data.forEach((row) => {
+        const src = row.source.trim().toLowerCase();          // normalise
         const hits = Number(row.count) || 0;
 
-        if (src.includes("face"))       counts.facebook      += hits;
+        if (src.includes("face"))      counts.facebook     += hits;
         else if (src.includes("twit")) counts.twitter      += hits;
         else if (src.includes("insta")) counts.instagram   += hits;
         else if (src.includes("google")) counts.google_news += hits;
       });
 
-      // Add the total count from scanned_violations (which are all Google, as per your clarification)
-      counts.google_news += scannedViolationsCount; // Use the already fetched count
-
       setSocialCounts(counts);
       setLoadingSocial(false);
     };
 
-    // Only run this effect if scannedViolationsCount has been loaded
-    if (!loadingScannedViolations) {
-        fetchSocial();
-    }
-  }, [loadingScannedViolations, scannedViolationsCount]); // Depend on scannedViolationsCount and its loading state
+    fetchSocial();
+  }, []);
 
 
 
-  /* ───────────────── table actions  ────────────────── */
+  //tables 
   const toggleResolved = async (id, status) => {
     await supabase
       .from("reports")
@@ -147,12 +124,12 @@ export default function AdminDashboard() {
     setReports((prev) => prev.filter((r) => r.id !== id));
   };
 
-  /* ───────────────── ui helpers  ───────────────────── */
+  //interface helpers
   const statCard = (bg, Icon, label, value) => (
     <div
       className={`${bg} relative text-white rounded-xl shadow overflow-hidden`}
     >
-      {/* decorative poly-line */}
+      {/*decorative line */}
       <svg
         className="absolute inset-0 w-full h-full opacity-15"
         preserveAspectRatio="none"
@@ -204,27 +181,25 @@ export default function AdminDashboard() {
     </div>
   );
 
-  /* ───────────────── render  ───────────────────────── */
+  
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-3xl font-bold text-blue-700">Admin Dashboard</h1>
 
-      {/* ── top stats row ─────────────────────────────── */}
+      {/*top row stats*/}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {statCard("bg-indigo-600", FaRegFileAlt, "Total Reports", 
-          loadingReports || loadingScannedViolations ? "—" : totalReports // Show loading state
-        )}
+        {statCard("bg-indigo-600", FaRegFileAlt, "Total Reports", totalReports)}
         {statCard(
           "bg-red-500",
           FaExclamationTriangle,
-          "Critical (7 days)",
+          "Critical (7 days)",
           criticalThisWeek
         )}
         {statCard(
           "bg-emerald-500",
           FaCheckCircle,
           "Resolved",
-          loadingReports || loadingScannedViolations ? "—" : `${resolvedCount}/${totalReports}` // Show loading state
+          `${resolvedCount}/${totalReports}`
         )}
         {statCard(
           "bg-yellow-500",
@@ -234,7 +209,7 @@ export default function AdminDashboard() {
         )}
       </div>
 
-      {/* ── social media row ──────────────────────────── */}
+      {/*soxial medis stats*/}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {socialCard("bg-[#3b5998]", FaFacebookF, "facebook", "Facebook Incidents")}
         {socialCard("bg-[#1DA1F2]", FaTwitter, "twitter", "Twitter Incidents")}
@@ -244,10 +219,10 @@ export default function AdminDashboard() {
           "instagram",
           "Instagram Incidents"
         )}
-        {socialCard("bg-[#4285F4]", FaGoogle, "google_news", "Google News Hits")}
+        {socialCard("bg-[#4285F4]", FaGoogle, "google_news", "Google News Hits")}
       </div>
 
-      {/* ── reports table ─────────────────────────────── */}
+      {/* repots table*/}
       <div className="bg-white rounded-xl shadow p-4">
         <h2 className="text-xl font-semibold mb-4">All Reports</h2>
 
@@ -268,7 +243,7 @@ export default function AdminDashboard() {
                   <th className="p-2 border">Industry</th>
                   <th className="p-2 border">Type</th>
                   <th className="p-2 border">Location</th>
-                  <th className="p-2 border">Reg Class</th>
+                  <th className="p-2 border">Reg Class</th>
                   <th className="p-2 border">Casualties</th>
                   <th className="p-2 border">Status</th>
                   <th className="p-2 border">Submitted</th>
