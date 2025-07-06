@@ -54,7 +54,7 @@ export default function UserDashboard() {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">Welcome, {email}</h1>
+      <h1 className="text-3xl font-bold text-blue-700 mb-5">Welcome, {email}</h1>
 
       <Link
         to="/report"

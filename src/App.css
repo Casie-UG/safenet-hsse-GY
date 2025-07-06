@@ -36,3 +36,8 @@
     transform: rotate(360deg);
   }
 }
+
+body {
+  background-color: #e5e7eb; /* Tailwind's bg-gray-200 */
+  min-height: 100vh;
+}

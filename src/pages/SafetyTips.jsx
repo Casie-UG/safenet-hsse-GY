@@ -1,123 +1,109 @@
+// src/pages/SafetyTips.jsx
 import { useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+/* ––––– Flyer data ––––– */
 const flyers = [
-    {
-      id: 1,
-      title: "Hazard Safety Flyer",
-      imgUrl: "/flyers/hazard.png",   
-      description: "Important hazard safety protocols you should follow.",
-    },
-    {
-      id: 2,
-      title: "PPE Safety Flyer",
-      imgUrl: "/flyers/ppe.png",
-      description: "PPE",
-    },
-    {
-      id: 3,
-      title: "Workplace Stress Management Flyer",
-      imgUrl: "/flyers/stressmanag.png",
-      description: "General workplace stress management tips.",
-    },
-  ];
-  
+  {
+    id: 1,
+    title: "Hazard Safety Flyer",
+    imgUrl: "/flyers/hazard.png",
+    description: "Key hazard safety protocols everyone should follow.",
+  },
+  {
+    id: 2,
+    title: "PPE Safety Flyer",
+    imgUrl: "/flyers/ppe.png",
+    description: "The right PPE for the right job — always gear up.",
+  },
+  {
+    id: 3,
+    title: "Stress Management Flyer",
+    imgUrl: "/flyers/stressmanag.png",
+    description: "Tips to manage workplace stress effectively.",
+  },
+];
 
 export default function SafetyTips() {
-  const [selectedFlyer, setSelectedFlyer] = useState(null);
-  const navigate = useNavigate();
+  const [idx, setIdx]  = useState(0);
+  const navigate       = useNavigate();
+  const flyer          = flyers[idx];
+
+  const next  = () => setIdx((i) => (i + 1) % flyers.length);
+  const prev  = () => setIdx((i) => (i - 1 + flyers.length) % flyers.length);
 
   return (
-    <div className="max-w-5xl mx-auto p-6 space-y-8">
-      {/* Header */}
-      <h1 className="text-4xl font-bold text-center">SAFETY TIPS</h1>
-      <hr className="border-gray-300" />
+    <div className="min-h-screen flex flex-col justify-between">
+      {/* HEADER */}
+      <header className="py-3 text-center">
+        <h1 className="text-4xl font-bold text-red-600 tracking-wide">
+          SAFETY TIPS
+        </h1>
+      </header>
 
-      {/* Carousel */}
-      <section>
-        <h2 className="text-2xl font-semibold mb-4">Flyers Gallery</h2>
-        <div className="flex space-x-4 overflow-x-auto no-scrollbar py-2">
-          {flyers.map(({ id, imgUrl, title }) => (
-            <button
-              key={id}
-              onClick={() => setSelectedFlyer(flyers.find((f) => f.id === id))}
-              className="flex-shrink-0 w-48 h-32 rounded-lg overflow-hidden shadow-lg focus:outline-none border border-transparent hover:border-blue-600 transition"
-              aria-label={`View details for ${title}`}
-            >
-              <img
-                src={imgUrl}
-                alt={title}
-                className="object-cover w-full h-full"
-                loading="lazy"
-              />
-            </button>
-          ))}
+      {/* SLIDE SHOW */}
+      <section className="flex-grow max-w-4xl mx-auto w-full px-4">
+        <div className="relative bg-white rounded-xl shadow-xl h-[360px] flex items-center justify-center">
+          {/* slide image */}
+          <img
+            src={flyer.imgUrl}
+            alt={flyer.title}
+            className="object-contain h-full max-h-full rounded-xl"
+          />
+
+          {/* navigation arrows */}
+          <button
+            onClick={prev}
+            className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-white/80 backdrop-blur-md rounded-full shadow hover:bg-white"
+          >
+            <ChevronLeft size={28} />
+          </button>
+          <button
+            onClick={next}
+            className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white/80 backdrop-blur-md rounded-full shadow hover:bg-white"
+          >
+            <ChevronRight size={28} />
+          </button>
         </div>
 
-        {/* Modal for flyer details */}
-        {selectedFlyer && (
-          <div
-            onClick={() => setSelectedFlyer(null)}
-            className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center p-4 z-50 cursor-pointer"
-            role="dialog"
-            aria-modal="true"
-          >
-            <div
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-lg max-w-lg w-full p-6 relative"
-            >
-              <button
-                onClick={() => setSelectedFlyer(null)}
-                className="absolute top-3 right-3 text-gray-600 hover:text-gray-900 text-xl font-bold"
-                aria-label="Close flyer details"
-              >
-                &times;
-              </button>
-              <img
-                src={selectedFlyer.imgUrl}
-                alt={selectedFlyer.title}
-                className="w-full rounded mb-4"
-              />
-              <h3 className="text-xl font-semibold mb-2">{selectedFlyer.title}</h3>
-              <p>{selectedFlyer.description}</p>
-            </div>
-          </div>
-        )}
+        {/* caption */}
+        <div className="mt-6 text-center space-y-1">
+          <h2 className="text-2xl font-semibold text-gray-800">{flyer.title}</h2>
+          <p className="text-gray-600">{flyer.description}</p>
+        </div>
       </section>
-
-      <hr className="border-gray-300" />
-
-      {/* General Safety Tips */}
-      <section>
-        <h2 className="text-2xl font-semibold mb-4">General Safety Tips</h2>
-        <ul className="list-disc list-inside space-y-2 text-gray-700">
-          <li>Always wear appropriate personal protective equipment (PPE).</li>
-          <li>Keep your work area clean and free of hazards.</li>
-          <li>Report unsafe conditions immediately.</li>
-          <li>Follow proper procedures for handling equipment and materials.</li>
-          <li>Participate in regular safety training and drills.</li>
-        </ul>
-      </section>
-
-      <hr className="border-gray-300" />
 
       {/* Urgent Advisory Section */}
-      <section className="bg-red-100 border border-red-400 rounded p-6 flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-        <div className="flex items-center space-x-3 text-red-700 text-lg font-semibold">
-          <span role="img" aria-label="Warning">
-            ⚠️
-          </span>
-          <p className="max-w-xl">
-            IF ANY OF THESE PROTOCOLS WERE SEEN VIOLATED, REPORT IMMEDIATELY TO YOUR SUPERVISOR OR USE THE FORM
+      <section className="bg-red-100 border border-red-400 rounded-lg p-6 mt-5 max-w-4xl mx-auto text-center space-y-4">
+      <span role="img" aria-label="Warning" className="text-5xl">⚠️</span>
+        <div className="flex justify-center items-center gap-3 text-red-700 text-lg font-semibold">
+          <p className="max-w-2xl">
+            If any of these protocols are violated, report immediately to your supervisor
+            or use the online incident form below.
           </p>
         </div>
         <button
           onClick={() => navigate("/report")}
-          className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-3 rounded shadow"
+          className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-3 rounded shadow-md"
         >
           Report an Incident
         </button>
       </section>
+
+
+
+      {/* FOOTER */}
+      <footer className="mt-0 py-6 text-center text-sm text-gray-600 bg-gray-50">
+        <p className="mb-1">Safenet HSSE Reporting Platform v1.0</p>
+        <p>
+          For support, email&nbsp;
+          <a href="mailto:developer@example.com" className="text-blue-600 hover:underline">
+            developer@example.com
+          </a>
+        </p>
+        <p className="mt-2">© {new Date().getFullYear()} Safenet. All rights reserved.</p>
+      </footer>
     </div>
   );
 }

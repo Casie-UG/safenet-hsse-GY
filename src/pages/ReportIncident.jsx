@@ -1,10 +1,30 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../supabaseClient";
+import VoiceRecorder from "../components/VoiceRecorder";          // ⬅ make sure this path is correct
+import {
+  FaImage,
+  FaVideo,
+  FaMicrophoneAlt,
+  FaCheckCircle,
+} from "react-icons/fa";
 
 const BUCKET = "hsse-media";
 const NOMINATIM_HEADERS = { "User-Agent": "safenet-hsse-app" };
 
+/* helper ─ upload a File → return publicUrl */
+const uploadToSupabase = async (file, folder) => {
+  const ext = file.name.split(".").pop();
+  const path = `${folder}/${crypto.randomUUID()}.${ext}`;
+  const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
+    cacheControl: "3600",
+    upsert: false,
+  });
+  if (error) throw error;
+  return supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+};
+
 export default function ReportIncident() {
+  /* ───────────────────────  state  ─────────────────────── */
   const [formData, setFormData] = useState({
     reporter_name: "",
     is_anonymous: false,
@@ -23,12 +43,20 @@ export default function ReportIncident() {
     num_dead: "",
     paramedics_called: false,
     paramedics_responded: false,
-    media_urls: [],
   });
+
+  const [selectedMedia, setSelectedMedia] = useState({
+    images: [], 
+    video: null,
+    voice: null
+  });
+
   const [uploading, setUploading] = useState(false);
   const [session, setSession] = useState(null);
+  const addressTimer = useRef(null);
+  const reverseTimer = useRef(null);
 
-  /* auth listener + autofill reporter*/
+  /* ────────────────  auth: autofill reporter  ───────────── */
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
     const { data: listener } = supabase.auth.onAuthStateChange((_e, ns) =>
@@ -38,41 +66,36 @@ export default function ReportIncident() {
   }, []);
 
   useEffect(() => {
-    if (session && !formData.is_anonymous) {
+    if (session && !formData.is_anonymous)
       setFormData((p) => ({ ...p, reporter_name: session.user.email }));
-    }
   }, [session, formData.is_anonymous]);
 
-
-  /* forward geocode (address ➜ lat/lng)*/
-  const addressTimer = useRef(null);
+  /* ────────────────  forward geocode  ─────────────────── */
   useEffect(() => {
     if (!formData.location_text) return;
     clearTimeout(addressTimer.current);
     addressTimer.current = setTimeout(async () => {
       try {
-        const res = await fetch(
+        const r = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(
             formData.location_text
           )}`,
           { headers: NOMINATIM_HEADERS }
         );
-        const data = await res.json();
-        if (data[0]) {
+        const d = await r.json();
+        if (d[0])
           setFormData((p) => ({
             ...p,
-            latitude: data[0].lat,
-            longitude: data[0].lon,
+            latitude: d[0].lat,
+            longitude: d[0].lon,
           }));
-        }
       } catch (err) {
-        console.error("Forward geocoding failed:", err);
+        console.error("Geocoding failed", err);
       }
     }, 300);
   }, [formData.location_text]);
 
-  /*reverse geocode (lat/lng ➜ address)*/
-  const reverseTimer = useRef(null);
+  /* ────────────────  reverse geocode  ─────────────────── */
   useEffect(() => {
     const { latitude, longitude, location_text } = formData;
     if (!latitude || !longitude || location_text) return;
@@ -80,95 +103,97 @@ export default function ReportIncident() {
     clearTimeout(reverseTimer.current);
     reverseTimer.current = setTimeout(async () => {
       try {
-        const res = await fetch(
+        const r = await fetch(
           `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
           { headers: NOMINATIM_HEADERS }
         );
-        const data = await res.json();
-        if (data?.display_name) {
-          setFormData((p) => ({ ...p, location_text: data.display_name }));
-        }
+        const d = await r.json();
+        if (d?.display_name)
+          setFormData((p) => ({ ...p, location_text: d.display_name }));
       } catch (err) {
-        console.error("Reverse geocoding failed:", err);
+        console.error("Reverse geocoding failed", err);
       }
     }, 250);
   }, [formData.latitude, formData.longitude, formData.location_text]);
+  
 
+  /* ────────────────  handlers  ───────────────────────── */
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((p) => ({ ...p, [name]: type === "checkbox" ? checked : value }));
+  };
 
-  /*GPS pick‑up*/
+  const handleImageSelect = (e) =>
+    setSelectedMedia((p) => ({ ...p, images: Array.from(e.target.files) }));
 
+  const handleVideoSelect = (e) =>
+    setSelectedMedia((p) => ({ ...p, video: e.target.files[0] || null }));
+
+  const handleVoiceFileSelect = (e) =>
+    setSelectedMedia((p) => ({ ...p, voice: e.target.files[0] || null }));
+
+  const handleVoiceReady = (file) =>
+    setSelectedMedia((p) => ({ ...p, voice: file }));
+
+  /* ────────────────  GPS  ─────────────────────────────── */
   const useBrowserLocation = () => {
-    if (!navigator.geolocation) {
-      alert("Geolocation not supported.");
-      return;
-    }
+    if (!navigator.geolocation) return alert("Geolocation not supported.");
     navigator.geolocation.getCurrentPosition(
       (pos) =>
         setFormData((p) => ({
           ...p,
           latitude: pos.coords.latitude,
           longitude: pos.coords.longitude,
-          location_text: "", // trigger reverse geocode
+          location_text: "",
         })),
       () => alert("Unable to fetch location.")
     );
   };
 
   
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((p) => ({ ...p, [name]: type === "checkbox" ? checked : value }));
-  };
-
-  /*uploads*/
-  const handleFileChange = async (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length === 0) return;
-    setUploading(true);
-    const urls = [];
-
-    for (const f of files) {
-      const path = `${crypto.randomUUID()}.${f.name.split(".").pop()}`;
-      const { error } = await supabase.storage.from(BUCKET).upload(path, f);
-      if (error) {
-        console.error("Upload failed:", error);
-        alert(`Upload failed: ${f.name}`);
-        continue;
-      }
-      const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
-      urls.push(data.publicUrl);
-    }
-    setFormData((p) => ({ ...p, media_urls: [...p.media_urls, ...urls] }));
-    setUploading(false);
-  };
-
-  /*submit*/
+  /* ────────────────  submit  ──────────────────────────── */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const user =
-      session?.user || (await supabase.auth.getSession()).data.session?.user;
+    setUploading(true);
 
-    const payload = {
-      ...formData,
-      user_id: user ? user.id : null,
-      reporter_name:
-        formData.is_anonymous || !user ? formData.reporter_name : user.email,
-    };
+    try {
+      const user =
+        session?.user || (await supabase.auth.getSession()).data.session?.user;
 
-    ["latitude", "longitude", "num_injured", "num_dead"].forEach((k) => {
-      payload[k] =
-        payload[k] === "" || payload[k] == null ? null : Number(payload[k]);
-    });
+      /* 1) upload any media that was selected */
+      const mediaUrls = [];
 
-    const { error } = await supabase.from("reports").insert([payload]);
-    if (error) {
-      console.error("Insert error:", error);
-      alert("Error submitting report: " + error.message);
-    } else {
+      for (const img of selectedMedia.images)
+        mediaUrls.push(await uploadToSupabase(img, "images"));
+
+      if (selectedMedia.video)
+        mediaUrls.push(await uploadToSupabase(selectedMedia.video, "videos"));
+
+      if (selectedMedia.voice)
+        mediaUrls.push(await uploadToSupabase(selectedMedia.voice, "voices"));
+
+      /* 2) prepare payload */
+      const payload = {
+        ...formData,
+        user_id: user ? user.id : null,
+        reporter_name:
+          formData.is_anonymous || !user ? formData.reporter_name : user.email,
+        media_urls: mediaUrls,
+      };
+
+      ["latitude", "longitude", "num_injured", "num_dead"].forEach((k) => {
+        payload[k] =
+          payload[k] === "" || payload[k] == null ? null : Number(payload[k]);
+      });
+
+      /* 3) insert */
+      const { error } = await supabase.from("reports").insert([payload]);
+      if (error) throw error;
+
       alert("Report submitted successfully!");
+      /* reset */
       setFormData((p) => ({
         ...p,
-        reporter_name: "",
         incident_description: "",
         date_of_incident: "",
         latitude: "",
@@ -184,18 +209,25 @@ export default function ReportIncident() {
         num_dead: "",
         paramedics_called: false,
         paramedics_responded: false,
-        media_urls: [],
       }));
+      setSelectedMedia({ images: [], video: null, voice: null });
+    } catch (err) {
+      console.error(err);
+      alert("Error: " + err.message);
+    } finally {
+      setUploading(false);
     }
   };
-
   
+  /* ────────────────  UI  ─────────────────────────────── */
   return (
     <div className="max-w-3xl mx-auto p-6 bg-white rounded-xl shadow border">
-      <h2 className="text-3xl font-bold mb-6">Report an Incident</h2>
+      <h2 className="text-3xl font-bold text-blue-700 mb-6">
+        Report an Incident
+      </h2>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {/*reporter*/}
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* reporter */}
         <div className="grid md:grid-cols-2 gap-4">
           <input
             name="reporter_name"
@@ -216,17 +248,16 @@ export default function ReportIncident() {
           </label>
         </div>
 
-        {/* incident description */}
+        {/* description + date */}
         <textarea
           name="incident_description"
           value={formData.incident_description}
           onChange={handleChange}
-          placeholder="Describe the incident..."
+          placeholder="Describe the incident…"
           className="input"
           rows={4}
           required
         />
-
         <input
           type="date"
           name="date_of_incident"
@@ -303,7 +334,7 @@ export default function ReportIncident() {
           className="input"
         />
 
-        {/*location */}
+        {/* location */}
         <input
           name="location_text"
           value={formData.location_text}
@@ -311,7 +342,6 @@ export default function ReportIncident() {
           placeholder="Incident Address / Landmark"
           className="input"
         />
-
         <button
           type="button"
           onClick={useBrowserLocation}
@@ -319,7 +349,6 @@ export default function ReportIncident() {
         >
           Use My Current Location
         </button>
-
         <div className="grid grid-cols-2 gap-4">
           <input
             value={formData.latitude}
@@ -335,29 +364,8 @@ export default function ReportIncident() {
           />
         </div>
 
-        {/* Uploads */}
-        <div className="space-y-1">
-          <label className="block font-medium">Attach Photos / Videos</label>
-          <input
-            type="file"
-            accept="image/*,video/*"
-            multiple
-            onChange={handleFileChange}
-            className="input"
-          />
-          {uploading && <p className="text-blue-600 text-sm">Uploading…</p>}
-
-          {formData.media_urls.length > 0 && (
-            <ul className="list-disc list-inside text-green-700 text-sm space-y-1">
-              {formData.media_urls.map((url) => (
-                <li key={url}>{url.split("/").pop()}</li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-
-        {/*casualties*/}
+        
+      {/*casualties*/}
         <label className="flex items-center font-semibold space-x-2">
           <input type="checkbox" name="casualties" checked={formData.casualties} onChange={handleChange} />
           <span>Casualties involved?</span>
@@ -405,11 +413,70 @@ export default function ReportIncident() {
         )}
 
 
+      {/* ─── MEDIA PICKERS ─── */}
+      <div className="space-y-4">
+          {/* images */}
+          <label className="block font-medium">
+            <FaImage className="inline mr-2" /> Images (max 4)
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleImageSelect}
+              className="mt-1 input"
+            />
+          </label>
+
+          {/* video */}
+          <label className="block font-medium">
+            <FaVideo className="inline mr-2" /> Video
+            <input
+              type="file"
+              accept="video/*"
+              onChange={handleVideoSelect}
+              className="mt-1 input"
+            />
+          </label>
+
+          {/* voice file */}
+          <label className="block font-medium">
+            <FaMicrophoneAlt className="inline mr-2" /> Voice note (file)
+            <input
+              type="file"
+              accept="audio/*"
+              onChange={handleVoiceFileSelect}
+              className="mt-1 input"
+            />
+          </label>
+
+          {/* in‑browser recorder */}
+          <VoiceRecorder onRecordingComplete={handleVoiceReady} />
+
+          {/* previews */}
+          {selectedMedia.images.length > 0 && (
+            <p className="text-sm text-gray-600 flex items-center gap-1">
+              <FaCheckCircle className="text-green-500" />{" "}
+              {selectedMedia.images.length} image(s) selected
+            </p>
+          )}
+          {selectedMedia.video && (
+            <p className="text-sm text-gray-600 flex items-center gap-1">
+              <FaCheckCircle className="text-green-500" /> 1 video selected
+            </p>
+          )}
+          {selectedMedia.voice && (
+            <p className="text-sm text-gray-600 flex items-center gap-1">
+              <FaCheckCircle className="text-green-500" /> voice note ready
+            </p>
+          )}
+        </div>
+
         <button
           type="submit"
-          className="w-full bg-blue-700 text-white py-3 rounded-md hover:bg-blue-800"
+          disabled={uploading}
+          className="w-full bg-blue-700 text-white py-3 rounded-md hover:bg-blue-800 disabled:opacity-60"
         >
-          Submit Report
+          {uploading ? "Submitting…" : "Submit Report"}
         </button>
       </form>
     </div>
