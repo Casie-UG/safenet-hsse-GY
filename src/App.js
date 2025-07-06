@@ -10,6 +10,7 @@ import UserDashboard from "./pages/UserDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
 import Quiz from "./pages/Quiz";
+import IncidentManagement from './pages/IncidentManagement';
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
           <Route path="/safety" element={<SafetyTips />} />
           <Route path="/login" element={<Login />} />
           <Route path="/quiz" element={<Quiz />} />
+          <Route path="/admin/incidents" element={<IncidentManagement />} />
 
           {/* User‑only section */}
           <Route element={<ProtectedRoute allowedRoles={["user"]} />}>

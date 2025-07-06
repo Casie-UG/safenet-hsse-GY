@@ -1,9 +1,8 @@
-// src/pages/SafetyTips.jsx
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-/* ––––– Flyer data ––––– */
+//flyers
 const flyers = [
   {
     id: 1,

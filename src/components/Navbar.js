@@ -110,6 +110,15 @@ export default function Navbar({ children }) {
             </NavLink>
           )}
 
+          <NavLink
+            to="/admin/incidents"
+            className={linkClass}
+            title="Incident Management"
+          >
+            <FaClipboardList size={iconSize} />
+            {!collapsed && <span className="truncate">Incident Management</span>}
+          </NavLink>
+
           <NavLink to="/report" className={linkClass} title="Report an Incident">
             <FaClipboardList size={iconSize} />
             {!collapsed && <span className="truncate">Report an Incident</span>}
@@ -125,6 +134,7 @@ export default function Navbar({ children }) {
             {!collapsed && <span className="truncate">Test Your Knowledge</span>}
           </NavLink>
 
+          
         {/* ── Auth / Logout ─────────────────────── */}
         <div className="w-full">
           {session ? (

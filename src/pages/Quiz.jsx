@@ -114,7 +114,7 @@ const KnowledgeBase = () => {
 
     // Save to Supabase (optional)
     await supabase.from('quiz_results').insert([{
-      user_id: 'anonymous', // Replace with real user ID if logged in
+      user_id: 'anonymous', 
       score: newScore,
       total: Object.keys(answers).length,
       submitted_at: new Date()

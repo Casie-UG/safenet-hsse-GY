@@ -1,4 +1,3 @@
-// src/pages/Dashboard.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
@@ -18,15 +17,15 @@ import {
 } from "recharts";
 import { FaExclamationCircle, FaMapMarkerAlt } from "react-icons/fa";
 
-/* colour palette for pie */
+//colour palette for pie
 const COLORS = ["#EF4444", "#F97316", "#FBBF24", "#10B981", "#3B82F6"];
 
 export default function Dashboard() {
-  /* incident feed (latest 10) */
+  //incident feed (latest 10)
   const [incidents, setIncidents] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  /* summary stats pulled from DB */
+  //summary stats pulled from DB
   const [criticalToday, setCriticalToday] = useState(0);
   const [severityStats, setSeverityStats] = useState([]); 
   const [topLocation, setTopLocation] = useState("N/A");
@@ -35,7 +34,7 @@ export default function Dashboard() {
   const [statsLoading, setStatsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  /* ── Fetch feed ─────────────────────────────────── */
+  // Fetch feed
   useEffect(() => {
     (async () => {
       try {
@@ -54,7 +53,7 @@ export default function Dashboard() {
     })();
   }, []);
 
-  /* ── Fetch stats ────────────────────────────────── */
+  // Fetch stats
   useEffect(() => {
     const today = new Date().toISOString().slice(0, 10);
 
@@ -128,12 +127,12 @@ export default function Dashboard() {
   const lat = incident.location?.lat ?? 6.8;
   const lng = incident.location?.lng ?? -58.15;
 
-  /* ────────────────────────────── UI ────────────────────────────── */
+  //interface
   return (
     <div className="max-w-8xl mx-auto px-4 sm:px-6 py-4 space-y-4 ">
       <h1 className="text-3xl font-bold text-blue-700">Public Dashboard</h1>
 
-      {/* ── Summary cards ── */}
+      {/*cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 
       {/* card 1 */}
@@ -203,7 +202,7 @@ export default function Dashboard() {
       </div>
       </div>
 
-      {/* ── Incident carousel ── */}
+      {/*incidents  */}
       <div className="bg-white shadow rounded p-4 relative px-16">
         <h2 className="text-xl font-bold text-blue-700 mb-3">
           {incident.incident_description || "No description"}
@@ -239,7 +238,7 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* ── Map ── */}
+      {/*map*/}
       <div className="h-60 rounded overflow-hidden shadow">
         <MapContainer
           center={[lat, lng]}
@@ -255,7 +254,7 @@ export default function Dashboard() {
         </MapContainer>
       </div>
 
-      {/* ── Industry bar chart ── */}
+      {/*chart*/}
       <div className="bg-white shadow rounded p-4">
         <h2 className="text-lg font-semibold mb-3">
           Reports by Industry (latest 10)
@@ -277,7 +276,7 @@ export default function Dashboard() {
   );
 }
 
-/* ────────────────────────── Helper Components ───────────────────────── */
+//componeents 
 
 function StatCard({ title, icon, value, bg, truncate = false }) {
   return (

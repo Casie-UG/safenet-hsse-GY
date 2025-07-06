@@ -1,4 +1,3 @@
-// src/pages/AdminDashboard.jsx
 import { useEffect, useState, useMemo } from "react";
 import {
   FaRegFileAlt,
@@ -14,7 +13,7 @@ import { supabase } from "../supabaseClient";
 
 
 export default function AdminDashboard() {
-  /* ─────────────────────  state  ───────────────────── */
+  //states
   const [reports, setReports] = useState([]);
   const [loadingReports, setLoadingReports] = useState(true);
   
@@ -26,7 +25,7 @@ export default function AdminDashboard() {
   });
   const [loadingSocial, setLoadingSocial] = useState(true);
 
-  /* ───────────────── stat helpers (reports) ────────── */
+  //stat report helpers
   const totalReports = reports.length;
 
   const criticalThisWeek = useMemo(() => {
@@ -50,7 +49,7 @@ export default function AdminDashboard() {
         )
       : null; // hours
 
-  /* ───────────────── fetch reports  ─────────────────── */
+  //fetch reports
   useEffect(() => {
     const fetchReports = async () => {
       setLoadingReports(true);
@@ -66,7 +65,7 @@ export default function AdminDashboard() {
     fetchReports();
   }, []);
 
-  /* ───────────────── fetch social‑media counts ───────────── */
+  //social media counts
   useEffect(() => {
     const fetchSocial = async () => {
       setLoadingSocial(true);
@@ -104,7 +103,7 @@ export default function AdminDashboard() {
 
 
 
-  /* ───────────────── table actions  ────────────────── */
+  //tables 
   const toggleResolved = async (id, status) => {
     await supabase
       .from("reports")
@@ -125,12 +124,12 @@ export default function AdminDashboard() {
     setReports((prev) => prev.filter((r) => r.id !== id));
   };
 
-  /* ───────────────── ui helpers  ───────────────────── */
+  //interface helpers
   const statCard = (bg, Icon, label, value) => (
     <div
       className={`${bg} relative text-white rounded-xl shadow overflow-hidden`}
     >
-      {/* decorative poly‑line */}
+      {/*decorative line */}
       <svg
         className="absolute inset-0 w-full h-full opacity-15"
         preserveAspectRatio="none"
@@ -182,12 +181,12 @@ export default function AdminDashboard() {
     </div>
   );
 
-  /* ───────────────── render  ───────────────────────── */
+  
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-3xl font-bold text-blue-700">Admin Dashboard</h1>
 
-      {/* ── top stats row ─────────────────────────────── */}
+      {/*top row stats*/}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {statCard("bg-indigo-600", FaRegFileAlt, "Total Reports", totalReports)}
         {statCard(
@@ -210,7 +209,7 @@ export default function AdminDashboard() {
         )}
       </div>
 
-      {/* ── social media row ──────────────────────────── */}
+      {/*soxial medis stats*/}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {socialCard("bg-[#3b5998]", FaFacebookF, "facebook", "Facebook Incidents")}
         {socialCard("bg-[#1DA1F2]", FaTwitter, "twitter", "Twitter Incidents")}
@@ -223,7 +222,7 @@ export default function AdminDashboard() {
         {socialCard("bg-[#4285F4]", FaGoogle, "google_news", "Google News Hits")}
       </div>
 
-      {/* ── reports table ─────────────────────────────── */}
+      {/* repots table*/}
       <div className="bg-white rounded-xl shadow p-4">
         <h2 className="text-xl font-semibold mb-4">All Reports</h2>
 

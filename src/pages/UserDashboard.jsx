@@ -29,7 +29,7 @@ export default function UserDashboard() {
         return;
       }
 
-      setEmail(user.email); // show greeting
+      setEmail(user.email); 
 
       // 👉  filter by user_id = UUID
       const { data, error } = await supabase
