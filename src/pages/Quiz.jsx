@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 
 const KnowledgeBase = () => {
@@ -16,26 +15,7 @@ const KnowledgeBase = () => {
 
   const [score, setScore] = useState(null);
   const [feedback, setFeedback] = useState({});
-
-  const checkAnswers = () => {
-    let newScore = 0;
-    const newFeedback = {};
-
-    for (const q in answers) {
-      const selected = document.querySelector('input[name="${q}"]:checked');
-      const selectedValue = selected?.value;
-
-      if (selectedValue === answers[q]) {
-        newScore++;
-        newFeedback[q] = { correct: true, selected: selectedValue };
-      } else {
-        newFeedback[q] = { correct: false, selected: selectedValue || null };
-      }
-    }
-
-    setScore(newScore);
-    setFeedback(newFeedback);
-  };
+  const [selectedAnswers, setSelectedAnswers] = useState({});
 
   const questions = [
     {
@@ -115,23 +95,52 @@ const KnowledgeBase = () => {
     }
   ];
 
+  const checkAnswers = async () => {
+    let newScore = 0;
+    const newFeedback = {};
+
+    for (const q in answers) {
+      const selectedValue = selectedAnswers[q];
+      if (selectedValue === answers[q]) {
+        newScore++;
+        newFeedback[q] = { correct: true, selected: selectedValue };
+      } else {
+        newFeedback[q] = { correct: false, selected: selectedValue || null };
+      }
+    }
+
+    setScore(newScore);
+    setFeedback(newFeedback);
+
+    // Save to Supabase (optional)
+    await supabase.from('quiz_results').insert([{
+      user_id: 'anonymous', // Replace with real user ID if logged in
+      score: newScore,
+      total: Object.keys(answers).length,
+      submitted_at: new Date()
+    }]);
+  };
+
+  const resetQuiz = () => {
+    setScore(null);
+    setFeedback({});
+    setSelectedAnswers({});
+  };
+
   return (
     <div style={{ fontFamily: 'Arial, sans-serif', maxWidth: '800px', margin: '2rem auto', padding: '0 1rem' }}>
-      <h1 style={{ textAlign: 'center'}}>HSSE Quiz</h1>
+      <h1 style={{ textAlign: 'center' }}>HSSE Quiz</h1>
       <form>
         {questions.map((q, idx) => {
           const userFeedback = feedback[q.id];
           return (
-            <div
-              key={q.id}
-              style={{ marginBottom: '1.5rem', border: '1px solid #ccc', padding: '1rem', borderRadius: '5px' }}
-            >
+            <div key={q.id} style={{ marginBottom: '1.5rem', border: '1px solid #ccc', padding: '1rem', borderRadius: '5px' }}>
               <h2 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>{idx + 1}. {q.question}</h2>
               <div>
                 {q.options.map((opt, i) => {
                   const optionValue = String.fromCharCode(65 + i);
                   const isCorrect = answers[q.id] === optionValue;
-                  const isSelected = userFeedback?.selected === optionValue;
+                  const isSelected = selectedAnswers[q.id] === optionValue;
 
                   let color = 'inherit';
                   if (score !== null) {
@@ -149,7 +158,13 @@ const KnowledgeBase = () => {
                         name={q.id}
                         value={optionValue}
                         disabled={score !== null}
-                        defaultChecked={isSelected}
+                        checked={isSelected || false}
+                        onChange={(e) => {
+                          setSelectedAnswers(prev => ({
+                            ...prev,
+                            [q.id]: e.target.value
+                          }));
+                        }}
                       />{' '}
                       {opt}
                     </label>
@@ -170,22 +185,41 @@ const KnowledgeBase = () => {
           );
         })}
 
-        <button
-          type="button"
-          onClick={checkAnswers}
-          style={{
-            backgroundColor: '#007bcc',
-            color: 'white',
-            border: 'none',
-            padding: '0.5rem 1rem',
-            cursor: 'pointer',
-            borderRadius: '4px',
-            display: 'block',
-            margin: '0 auto'
-          }}
-        >
-          Submit
-        </button>
+        {score === null ? (
+          <button
+            type="button"
+            onClick={checkAnswers}
+            style={{
+              backgroundColor: '#007bcc',
+              color: 'white',
+              border: 'none',
+              padding: '0.5rem 1rem',
+              cursor: 'pointer',
+              borderRadius: '4px',
+              display: 'block',
+              margin: '0 auto'
+            }}
+          >
+            Submit
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={resetQuiz}
+            style={{
+              backgroundColor: '#555',
+              color: 'white',
+              border: 'none',
+              padding: '0.5rem 1rem',
+              cursor: 'pointer',
+              borderRadius: '4px',
+              display: 'block',
+              margin: '0 auto'
+            }}
+          >
+            Try Again
+          </button>
+        )}
       </form>
 
       {score !== null && (
