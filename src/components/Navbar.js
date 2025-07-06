@@ -48,8 +48,13 @@ export default function Navbar() {
         <NavLink to="/report" className={linkClass}>
           Report an Incident
         </NavLink>
+
         <NavLink to="/safety" className={linkClass}>
           Safety Tips
+        </NavLink>
+
+        <NavLink to="/quiz" className={linkClass}>
+          Test your Knowledge
         </NavLink>
 
         {/* Dashboard link for logged-in users */}
@@ -66,6 +71,7 @@ export default function Navbar() {
         {session ? (
           <LogoutButton />
         ) : (
+          
           <NavLink to="/login" className={linkClass}>
             Log In
           </NavLink>

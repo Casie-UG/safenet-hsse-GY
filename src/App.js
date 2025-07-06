@@ -9,6 +9,8 @@ import Login from './pages/Login';
 import UserDashboard from "./pages/UserDashboard";   
 import AdminDashboard from "./pages/AdminDashboard";  
 import { ProtectedRoute } from "./routes/ProtectedRoute";
+import Quiz from './pages/Quiz';
+
 
 
 export default function App() {
@@ -24,8 +26,10 @@ export default function App() {
             <Route path="/report" element={<ReportIncident />} />
             <Route path="/safety" element={<SafetyTips />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/quiz" element={<Quiz />} />
             
             {/* User‑only section */}
+              <Route path="pages/quiz" element={<Quiz />} />
             <Route element={<ProtectedRoute allowedRoles={["user"]} />}>
               <Route path="/user" element={<UserDashboard />} />
             </Route>
